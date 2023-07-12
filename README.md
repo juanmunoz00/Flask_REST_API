@@ -1,2 +1,2 @@
-# flast_rest_api
+# flask_rest_api
 A simple project of stores and items management.
