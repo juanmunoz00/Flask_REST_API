@@ -4,6 +4,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 
 from db import items
+from schemas import ItemSchema, ItemUpdateSchema
 
 blp = Blueprint("Items", "items", description="Operations on items")
 
@@ -46,23 +47,20 @@ class Item(MethodView):
 
 @blp.route("/item")
 class ItemList(MethodView):
-    def get(self):
-        return {"items": list(items.values())}
+    #@blp.response(200, ItemSchema)
+    #def get(self, item_id):
+    #    try:
+    #        return items[item_id]
+    #    except KeyError:
+    #        abort(404, message="Item not found.")
 
-    def post(self):
-        item_data = request.get_json()
-        # Here not only we need to validate data exists,
-        # But also what type of data. Price should be a float,
-        # for example.
-        if (
-            "price" not in item_data
-            or "store_id" not in item_data
-            or "name" not in item_data
-        ):
-            abort(
-                400,
-                message="Bad request. Ensure 'price', 'store_id', and 'name' are included in the JSON payload.",
-            )
+    @blp.response(200, ItemSchema(many=True))
+    def get(self):
+        return items.values()
+
+    @blp.arguments(ItemSchema)
+    @blp.response(201, ItemSchema)
+    def post(self, item_data):
         for item in items.values():
             if (
                 item_data["name"] == item["name"]
@@ -75,3 +73,16 @@ class ItemList(MethodView):
         items[item_id] = item
 
         return item
+
+    @blp.arguments(ItemUpdateSchema)
+    @blp.response(200, ItemSchema)
+    def put(self, item_data, item_id):
+        try:
+            item = items[item_id]
+
+            # https://blog.teclado.com/python-dictionary-merge-update-operators/
+            item |= item_data
+
+            return item
+        except KeyError:
+            abort(404, message="Item not found.")
