@@ -81,13 +81,9 @@ def create_item():
     return item, 201
 
 # Endpoint to retrieve all items
-@app.get("/item") 
+@app.get("/items") 
 def get_all_items():
     return {"items": list(items.values())}
-
-
-
-
 
 # Endpoint to get and item in dictionary.
 # Return the store based on id.
@@ -97,3 +93,46 @@ def get_item(item_id):
         return items[item_id] 
     except KeyError:
         return abort(404, message = "Item not found.")
+
+# Endpoint to get and item in dictionary and delete it.
+# Return the store based on id.
+@app.delete("/item/<string:item_id>")
+def delete_item(item_id):
+    try:
+        del items[item_id]
+        return {"message": "Item deleted."}
+    except KeyError:
+        return abort(404, message = "Item not found.")
+    
+# Endpoint to get and item in dictionary and delete it.
+# Returns the updated item
+@app.put("/item/<string:item_id>")
+def update_item(item_id):
+    item_data = request.get_json()   
+    
+    if(
+        "price" not in item_data
+        or "name" not in item_data
+    ):
+        abort(
+            400,
+            message="Bad request. Missing price or name."
+        )
+    
+    try:
+        item = items[item_id]
+        item |= item_data
+        
+        return item
+    except KeyError:
+        abort(404, message="Item not found.")
+
+# Endpoint to get a store id from the dictionary and delete it.
+# Returns a message.        
+@app.delete("/store/<string:store_id>")
+def delete_store(store_id):
+    try:
+        del stores[store_id]
+        return {"message": "Store deleted."}
+    except KeyError:
+        return abort(404, message = "Store not found.")        
