@@ -9,10 +9,8 @@ import models
 from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 
-def create_app():
+def create_app(db_url=None):
     app = Flask(__name__)
-
-
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Stores REST API"
@@ -31,6 +29,9 @@ def create_app():
     db.init_app(app)
 
     api = Api(app)
+
+    with app.app_context():
+        db.create_all()
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
