@@ -10,7 +10,7 @@ from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 
 def create_app(db_url=None):
-    app = Flask(__name__)
+    app = Flask(__name__, instance_path=os.getcwd())
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Stores REST API"
