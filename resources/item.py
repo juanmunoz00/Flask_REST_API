@@ -12,39 +12,32 @@ blp = Blueprint("Items", "items", description="Operations on items")
 
 @blp.route("/item/<string:item_id>")
 class Item(MethodView):
+    @blp.response(200, ItemSchema)
     def get(self, item_id):
-        try:
-            return items[item_id]
-        except KeyError:
-            abort(404, message="Item not found.")
+        item = ItemModel.query.get_or_404(item_id)
+        
+        return item
 
     def delete(self, item_id):
-        try:
-            del items[item_id]
-            return {"message": "Item deleted."}
-        except KeyError:
-            abort(404, message="Item not found.")
+        item = ItemModel.query.get_or_404(item_id)
+        db.session.delete(item)
+        db.session.commit()
+        return {"message": "Item deleted."}
 
-    def put(self, item_id):
-        item_data = request.get_json()
-        # There's  more validation to do here!
-        # Like making sure price is a number, and also both items are optional
-        # Difficult to do with an if statement...
-        if "price" not in item_data or "name" not in item_data:
-            abort(
-                400,
-                message="Bad request. Ensure 'price', and 'name' are included in the JSON payload.",
-            )
-        try:
-            item = items[item_id]
+    @blp.arguments(ItemUpdateSchema)
+    @blp.response(200, ItemSchema)
+    def put(self, item_data, item_id):
+        item = ItemModel.query.get(item_id)
+        if item:
+            item.price = item_data["price"]
+            item.name = item_data["name"]
+        else:
+            item = ItemModel(id=item_id, **item_data)
+            
+        db.session.add(item)
+        db.session.commit()
 
-            # https://blog.teclado.com/python-dictionary-merge-update-operators/
-            item |= item_data
-
-            return item
-        except KeyError:
-            abort(404, message="Item not found.")
-
+        return item
 
 @blp.route("/item")
 class ItemList(MethodView):
@@ -57,7 +50,7 @@ class ItemList(MethodView):
 
     @blp.response(200, ItemSchema(many=True))
     def get(self):
-        return items.values()
+        return ItemModel.query.all()
 
     @blp.arguments(ItemSchema)
     @blp.response(201, ItemSchema)
@@ -68,7 +61,7 @@ class ItemList(MethodView):
             db.session.add(item)
             db.session.commit()
         except SQLAlchemyError:
-            abort(500, message="An error ocurred while inserting the item.")
+            abort(500, message="An error ocurred while inserting the item")
         
         return item
 
