@@ -2,6 +2,7 @@ import os
 #imports secrets
 from flask import Flask
 from flask_smorest import Api
+from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask import Flask, jsonify
 
@@ -33,6 +34,7 @@ def create_app(db_url=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
+    migrate = Migrate(app, db)
 
     api = Api(app)
     
@@ -86,10 +88,9 @@ def create_app(db_url=None):
             ),
             401,
         )    
-    
-    with app.app_context():
-        db.create_all()
-        
+
+    # app cntext replaced by flask migrate
+
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
